@@ -1,15 +1,20 @@
 import { Resend } from "resend";
 
 class ResendStrategy {
-  private resend: Resend;
+  private resend: Resend | null = null;
 
-  constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+  private getClient(): Resend {
+    if (!this.resend) {
+      const apiKey = process.env.RESEND_API_KEY || 're_123456789';
+      this.resend = new Resend(apiKey);
+    }
+    return this.resend;
   }
 
   async sendEmail(options: { to: string | string[]; subject: string; text?: string; html: string; attachments?: any[] }) {
     try {
-      const { data, error } = await this.resend.emails.send({
+      const client = this.getClient();
+      const { data, error } = await client.emails.send({
         from: `"${process.env.FROM_NAME || 'Glassforce'}" <${process.env.FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@glassforce.com'}>`,
         to: Array.isArray(options.to) ? options.to : [options.to],
         subject: options.subject,

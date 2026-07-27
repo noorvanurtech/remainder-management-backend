@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import app from './src/app';
 import connectDB from './src/config/db';
-import dotenv from 'dotenv';
 import path from 'path';
 import { logger } from './src/utils/logger';
 import dns from 'dns';
@@ -11,10 +11,6 @@ import CronJobManager from './src/cron';
 // Force Node.js to use Google DNS to bypass local DNS resolution issues (ECONNREFUSED)
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
-// Load Env based on NODE_ENV from Root Directory
-// const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-// dotenv.config({ path: path.resolve(__dirname, envFile) });
-dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 // Connect to Database and Start Server
