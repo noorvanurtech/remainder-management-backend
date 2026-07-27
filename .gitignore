@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.development
+.env.production
+.DS_Store
+coverage
+*.log
+package-lock.json
+google-cred.json
+*-cred.json
+*.pem
