@@ -2,7 +2,16 @@ import { Worker, Job } from "bullmq";
 import Redis from "ioredis";
 import notificationService from "../services/notification.service";
 
-const redisConnection = new Redis(process.env.REDIS_URL || "redis://localhost:6379", { maxRetriesPerRequest: null });
+const redisConnection = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
+  maxRetriesPerRequest: null,
+  retryStrategy(times) {
+    return Math.min(times * 2000, 30000);
+  },
+});
+
+redisConnection.on("error", (err) => {
+  // Prevent unhandled exception when Redis is not running locally
+});
 
 export const notificationWorker = new Worker(
   "notificationQueue",
@@ -21,4 +30,8 @@ notificationWorker.on("completed", (job) => {
 
 notificationWorker.on("failed", (job, err) => {
   console.log(`Notification Job ${job?.id} has failed with ${err.message}`);
+});
+
+notificationWorker.on("error", (err) => {
+  // Prevent unhandled exception when Redis is not running locally
 });

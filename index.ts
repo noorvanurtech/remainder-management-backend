@@ -8,6 +8,7 @@ import notificationGateway from './src/notification/gateways/notification.gatewa
 import { NotificationModule } from './src/notification/notification.module';
 import CronJobManager from './src/cron';
 
+
 // Force Node.js to use Google DNS to bypass local DNS resolution issues (ECONNREFUSED)
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
@@ -17,7 +18,7 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
     try {
         await connectDB();
-        
+
         const server = app.listen(PORT, () => {
             logger.info(`Server running on port ${PORT}`);
         });

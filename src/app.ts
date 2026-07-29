@@ -15,17 +15,8 @@ app.set('trust proxy', 1);
 ================================ */
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://checkout.razorpay.com", "https://*.razorpay.com"],
-        frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com", "https://*.razorpay.com"],
-        connectSrc: ["'self'", "https://api.razorpay.com", "https://*.razorpay.com"],
-        imgSrc: ["'self'", "data:", "https://*.razorpay.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      },
-    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
   })
 );
 
@@ -35,46 +26,7 @@ app.use(
    2. CORS Configuration
 ================================ */
 const corsOptions: CorsOptions = {
-  origin: (origin, callback) => {
-    const envOrigin = process.env.CORS_ORIGIN || '';
-    let allowedOrigins: string[] = [];
-
-    // Handle array-like env: ['url1','url2']
-    if (envOrigin.startsWith('[') && envOrigin.endsWith(']')) {
-      allowedOrigins = envOrigin
-        .slice(1, -1)
-        .split(',')
-        .map(o => o.trim().replace(/^['"]|['"]$/g, ''))
-        .filter(Boolean);
-    } else {
-      // Handle: url1,url2 OR single url
-      allowedOrigins = envOrigin
-        .split(',')
-        .map(o => o.trim())
-        .filter(Boolean);
-    }
-
-    // Debug (optional – remove later)
-    // console.log('Incoming Origin:', origin);
-
-    // Allow server-to-server / mobile / curl
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // Allow all if explicitly *
-    if (allowedOrigins.includes('*')) {
-      return callback(null, true);
-    }
-
-    // Exact origin match
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    return callback(new Error('Not allowed by CORS'));
-  },
-
+  origin: true, // Dynamically mirror request origin for CORS + Credentials
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],

@@ -3,24 +3,53 @@ import authService from '../services/authService';
 import { MESSAGES, STATUS } from '../constants/messages';
 
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // TODO: Implement register handler
-    // Command / Implementation Steps:
-    // 1. Extract { fullName, email, password, phone } from req.body
-    // 2. Call authService.register({ name: fullName, email, password, phone })
-    // 3. Return 201 response: { status: STATUS.SUCCESS, message: result.message, data: { email } }
-    // 4. Catch errors and return 500 response with failure message
-    throw new Error('Method not implemented.');
+    try {
+        const { fullName, name, email, password, phone } = req.body;
+        const userName = fullName || name;
+        const result = await authService.register({ name: userName, email, password, phone });
+
+        res.status(201).json({
+            status: STATUS.SUCCESS,
+            message: result.message,
+            token: result.token,
+            data: result.user
+        });
+    } catch (err) {
+        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+    }
+};
+
+export const adminRegister = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { fullName, name, email, password, phone } = req.body;
+        const userName = fullName || name;
+        const result = await authService.adminRegister({ name: userName, email, password, phone });
+
+        res.status(201).json({
+            status: STATUS.SUCCESS,
+            message: result.message,
+            token: result.token,
+            data: result.user
+        });
+    } catch (err) {
+        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+    }
 };
 
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // TODO: Implement login handler
-    // Command / Implementation Steps:
-    // 1. Extract { email, password } from req.body
-    // 2. Call authService.login(email, password)
-    // 3. If OTP is required, return 200 response with otpRequired flag and user email
-    // 4. Return 200 response with user data
-    // 5. Catch errors and return 500 response with failure message
-    throw new Error('Method not implemented.');
+    try {
+        const { email, password } = req.body;
+        const result = await authService.login(email, password);
+
+        res.status(200).json({
+            status: STATUS.SUCCESS,
+            message: result.message,
+            token: result.token,
+            data: result.user
+        });
+    } catch (err) {
+        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+    }
 };
 export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

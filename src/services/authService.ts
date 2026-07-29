@@ -14,14 +14,84 @@ class AuthService {
     });
   }
 
-  async register(data: Partial<IUser>): Promise<{ message: string }> {
-    // TODO: Implement register logic
-    // Command / Implementation Steps:
-    // 1. Check if user already exists: userService.findByEmail(data.email)
-    // 2. Prepare user object with default role (ROLES.USER) & status (STATUS.ACTIVE)
-    // 3. Create user record: User.create(userData)
+  async register(data: { name: string; email: string; password: string; phone?: string }): Promise<{ user: IUser; token: string; message: string }> {
+    if (!data.email || !data.password || !data.name) {
+      throw new Error(MESSAGES.AUTH.PROVIDE_CREDENTIALS);
+    }
 
-    throw new Error('Method not implemented.');
+    const existingUser = await userService.findByEmail(data.email);
+    if (existingUser) {
+      throw new Error(MESSAGES.USER.EMAIL_EXISTS);
+    }
+
+    const userData: any = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: ROLES.USER,
+      status: STATUS.ACTIVE,
+    };
+
+    if (data.phone && String(data.phone).trim() !== '') {
+      userData.phone = data.phone;
+    }
+
+    const user = await User.create(userData);
+
+    // Emit event for new user registration
+    appEventEmitter.emit(EVENTS.USER_REGISTERED, user.toObject());
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = this.signToken((user._id as any).toString());
+    user.password = undefined;
+
+    return {
+      user,
+      token,
+      message: MESSAGES.USER.CREATED,
+    };
+  }
+
+  async adminRegister(data: { name: string; email: string; password: string; phone?: string }): Promise<{ user: IUser; token: string; message: string }> {
+    if (!data.email || !data.password || !data.name) {
+      throw new Error(MESSAGES.AUTH.PROVIDE_CREDENTIALS);
+    }
+
+    const existingUser = await userService.findByEmail(data.email);
+    if (existingUser) {
+      throw new Error(MESSAGES.USER.EMAIL_EXISTS);
+    }
+
+    const userData: any = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: ROLES.ADMIN,
+      status: STATUS.ACTIVE,
+    };
+
+    if (data.phone && String(data.phone).trim() !== '') {
+      userData.phone = data.phone;
+    }
+
+    const user = await User.create(userData);
+
+    // Emit event for new user registration
+    appEventEmitter.emit(EVENTS.USER_REGISTERED, user.toObject());
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = this.signToken((user._id as any).toString());
+    user.password = undefined;
+
+    return {
+      user,
+      token,
+      message: MESSAGES.USER.CREATED,
+    };
   }
 
   async googleLogin(idToken: string, role?: string): Promise<{ user: IUser; token: string; message: string }> {
@@ -98,15 +168,36 @@ class AuthService {
   async login(
     email: string,
     password: string,
-  ): Promise<{ user: IUser; otpRequired: boolean; message: string }> {
-    // TODO: Implement login logic
-    // Command / Implementation Steps:
-    // 1. Validate email and password inputs
-    // 2. Find user by email: userService.findByEmail(email)
-    // 3. Verify user existence, status === STATUS.ACTIVE, and match password: user.matchPassword(password)
-    // 4. Generate OTP code & expiration and save to user document
-    //  5. will return the token which we will store in the frontend adn all for authorized api reques
-    throw new Error('Method not implemented.');
+  ): Promise<{ user: IUser; token: string; message: string }> {
+    if (!email || !password) {
+      throw new Error(MESSAGES.AUTH.PROVIDE_CREDENTIALS);
+    }
+
+    const user = await userService.findByEmail(email);
+    if (!user) {
+      throw new Error(MESSAGES.AUTH.USER_NOT_FOUND);
+    }
+
+    if (user.status !== STATUS.ACTIVE) {
+      throw new Error(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      throw new Error(MESSAGES.AUTH.INCORRECT_PASSWORD);
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = this.signToken((user._id as any).toString());
+    user.password = undefined;
+
+    return {
+      user,
+      token,
+      message: MESSAGES.AUTH.LOGIN_SUCCESS,
+    };
   }
 
   async verifyOtp(
