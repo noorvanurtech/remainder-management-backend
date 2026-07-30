@@ -20,15 +20,28 @@ class CronJobManager {
       timezone: "Asia/Kolkata"
     });
 
-    // Check & dispatch reminder notifications (email & dashboard) every 5 minutes
+    // 1. Continuous check & dispatch reminder notifications (email & dashboard) every 5 minutes
     cron.schedule('*/5 * * * *', async () => {
-      logger.info('Cron triggered: Reminder Notifications Check');
+      logger.info('Cron triggered: Reminder Notifications Check (5-min interval)');
       try {
         await reminderNotificationService.checkAndSendReminderNotifications();
         logger.info('Cron completed: Reminder Notifications Check');
       } catch (error) {
         logger.error(`Cron failed: Reminder Notifications Check - ${error}`);
       }
+    });
+
+    // 2. Explicit Morning 8:00 AM IST Daily Reminder Notification Check
+    cron.schedule('0 8 * * *', async () => {
+      logger.info('Cron triggered: Morning 8:00 AM Reminder Notifications Check');
+      try {
+        await reminderNotificationService.checkAndSendReminderNotifications();
+        logger.info('Cron completed: Morning 8:00 AM Reminder Notifications Check');
+      } catch (error) {
+        logger.error(`Cron failed: Morning 8:00 AM Reminder Notifications Check - ${error}`);
+      }
+    }, {
+      timezone: "Asia/Kolkata"
     });
 
     logger.info('Cron Jobs initialized successfully.');

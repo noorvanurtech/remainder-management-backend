@@ -4,6 +4,7 @@ import User from "../models/user.model";
 import Reminder from "../models/reminder.model";
 import Client from "../models/client.model";
 import Category from "../models/category.model";
+import OrganizationEmail from "../models/organizationEmail.model";
 import { ROLES, STATUS } from "../constants";
 
 dotenv.config();
@@ -42,11 +43,33 @@ const seed = async () => {
 
     const userId = user._id;
 
-    // Clear existing clients, categories, reminders for this user
+    // Clear existing clients, categories, reminders, organization emails for this user
     console.log("Clearing existing data for user...");
     await Reminder.deleteMany({ user: userId });
     await Client.deleteMany({ user: userId });
     await Category.deleteMany({ user: userId });
+    await OrganizationEmail.deleteMany({ user: userId });
+
+    // Seed Organization Employee Emails
+    console.log("Seeding organization employee emails...");
+    await OrganizationEmail.create({
+      user: userId,
+      email: email,
+      name: "Main Organization Admin",
+      active: true,
+    });
+    await OrganizationEmail.create({
+      user: userId,
+      email: "dansu498@gmail.com",
+      name: "Notification Employee Recipient",
+      active: true,
+    });
+    await OrganizationEmail.create({
+      user: userId,
+      email: "noorfatmanoor411@gmail.com",
+      name: "Notification Employee Recipient",
+      active: true,
+    });
 
     // Seed Clients
     console.log("Seeding clients...");
@@ -62,33 +85,34 @@ const seed = async () => {
       await Category.create({ user: userId, name });
     }
 
-    // 1. Seed 7 Past Daily Reminders (Overdue/Pending testing)
-    console.log("Seeding 7 daily past reminders...");
-    const dailyTitles = [
-      "Daily Database Backup Inspection",
-      "Daily Cloud Server Health Audit",
-      "Daily Security Vulnerability Scan",
-      "Daily Error Log Review",
-      "Daily SSL Certificate Status Check",
-      "Daily Payment Gateway Sync",
-      "Daily API Performance Monitoring",
+    // Seed Specific Daily Reminders for Today (1:50 AM, 6 AM, 7 AM, 8 AM, 9 AM, 11 AM, 1 PM)
+    console.log("Seeding Today's Daily Reminders (1:50 AM, 6:00 AM, 7:00 AM, 8:00 AM, 9:00 AM, 11:00 AM, 1:00 PM)...");
+    const now = new Date();
+
+    const specificReminders = [
+      { title: "Nightly Security Audit (Completing at 1:50 AM Today)", hour: 1, minute: 50, desc: "Daily task due at 1:50 AM today." },
+      { title: "Early Morning Server Inspection (Completing at 6:00 AM Today)", hour: 6, minute: 0, desc: "Daily task due at 6:00 AM today." },
+      { title: "Morning Log Sync & Clean (Completing at 7:00 AM Today)", hour: 7, minute: 0, desc: "Daily task due at 7:00 AM today." },
+      { title: "Morning Operations Review (Completing at 8:00 AM Today)", hour: 8, minute: 0, desc: "Daily task due at 8:00 AM today." },
+      { title: "Morning Scaling Check (Completing at 9:00 AM Today)", hour: 9, minute: 0, desc: "Daily task due at 9:00 AM today (1hr trigger from 8 AM)." },
+      { title: "Mid-Day GST Processing (Completing at 11:00 AM Today)", hour: 11, minute: 0, desc: "Daily task due at 11:00 AM today (3hr trigger from 8 AM)." },
+      { title: "Afternoon Disaster Recovery Test (Completing at 1:00 PM Today)", hour: 13, minute: 0, desc: "Daily task due at 1:00 PM today (5hr trigger from 8 AM)." },
     ];
 
-    for (let i = 0; i < dailyTitles.length; i++) {
-      const pastDays = 7 - i; // 7 days ago, 6 days ago, ..., 1 day ago
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() - pastDays);
+    for (let i = 0; i < specificReminders.length; i++) {
+      const item = specificReminders[i];
+      const reminderDueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), item.hour, item.minute, 0);
 
       await Reminder.create({
         user: userId,
-        title: dailyTitles[i],
-        description: `Automated daily check scheduled ${pastDays} days ago.`,
+        title: item.title,
+        description: item.desc,
         client: clientNames[i % clientNames.length],
         category: categoryNames[i % categoryNames.length],
-        cycle: `cycle ${i + 1}`,
-        status: "Overdue",
-        dueDate: dueDate,
-        startDate: dueDate,
+        cycle: "cycle 1",
+        status: "Pending",
+        dueDate: reminderDueDate,
+        startDate: reminderDueDate,
         schedule: "Daily",
         repeat: true,
         notifyEmail: true,
@@ -96,7 +120,7 @@ const seed = async () => {
       });
     }
 
-    // 2. Seed 3 Monthly Reminders Completed on 29 July 2026
+    // Seed 3 Monthly Reminders Completed on 29 July 2026
     console.log("Seeding 3 monthly reminders completed on 29 July...");
     const completedJulyTitles = [
       "Monthly GST Return Filing & Payment",
@@ -143,7 +167,7 @@ const seed = async () => {
       });
     }
 
-    // 3. Seed 10 Future Monthly Reminders
+    // Seed 10 Future Monthly Reminders
     console.log("Seeding 10 future monthly reminders...");
     const futureTitles = [
       "Annual Domain Name Renewal - acme-site.com",
@@ -160,8 +184,8 @@ const seed = async () => {
 
     for (let i = 0; i < futureTitles.length; i++) {
       const futureDate = new Date();
-      futureDate.setMonth(futureDate.getMonth() + (i + 1)); // 1 month in future, 2 months in future, etc.
-      futureDate.setDate(15); // 15th of each upcoming month
+      futureDate.setMonth(futureDate.getMonth() + (i + 1));
+      futureDate.setDate(15);
 
       await Reminder.create({
         user: userId,
@@ -184,10 +208,14 @@ const seed = async () => {
     console.log("Seeding finished successfully!");
     console.log(`User Email: ${email}`);
     console.log(`User Password: ${password}`);
-    console.log("Seeded:");
-    console.log("- 7 Past Overdue Daily Reminders");
-    console.log("- 3 Completed Monthly Reminders (Completed on 29 July 2026 + 3 next cycle Pending reminders)");
-    console.log("- 10 Future Monthly Reminders");
+    console.log("Seeded Daily Reminders Due Today:");
+    console.log("- 1:50 AM Today");
+    console.log("- 6:00 AM Today");
+    console.log("- 7:00 AM Today");
+    console.log("- 8:00 AM Today");
+    console.log("- 9:00 AM Today");
+    console.log("- 11:00 AM Today");
+    console.log("- 1:00 PM Today");
     console.log("==========================================\n");
 
     process.exit(0);
