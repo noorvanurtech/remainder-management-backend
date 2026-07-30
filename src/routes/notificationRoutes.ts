@@ -6,15 +6,17 @@ import {
   deleteNotification,
   triggerTestEmail,
 } from '../controllers/notification.controller';
-import { protect } from '../middleware/auth.middleware';
+import { protect, optionalAuth } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-// All notification routes require authentication
+// Allow test email endpoint with optional authentication (no 401 error if token is not sent)
+router.post('/test-email', optionalAuth, triggerTestEmail);
+
+// User dashboard notification routes require authentication
 router.use(protect);
 
 router.get('/', getUserNotifications);
-router.post('/test-email', triggerTestEmail);
 router.patch('/read-all', markAllAsRead);
 router.patch('/:id/read', markAsRead);
 router.delete('/:id', deleteNotification);
