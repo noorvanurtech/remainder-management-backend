@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { runBackup } from '../scripts/backup';
 import { logger } from '../utils/logger';
+import reminderNotificationService from '../notification/services/reminderNotification.service';
 
 class CronJobManager {
   public static initialize() {
@@ -19,8 +20,16 @@ class CronJobManager {
       timezone: "Asia/Kolkata"
     });
 
-    // You can easily add more cron jobs here in the future
-    // cron.schedule('0 0 * * *', async () => { ... });
+    // Check & dispatch reminder notifications (email & dashboard) every 5 minutes
+    cron.schedule('*/5 * * * *', async () => {
+      logger.info('Cron triggered: Reminder Notifications Check');
+      try {
+        await reminderNotificationService.checkAndSendReminderNotifications();
+        logger.info('Cron completed: Reminder Notifications Check');
+      } catch (error) {
+        logger.error(`Cron failed: Reminder Notifications Check - ${error}`);
+      }
+    });
 
     logger.info('Cron Jobs initialized successfully.');
   }

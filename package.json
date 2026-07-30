@@ -14,6 +14,7 @@
     "check-types": "tsc --noEmit",
     "seed": "ts-node src/scripts/seed.ts",
     "backup": "ts-node src/scripts/backup.ts",
+    "test-email": "ts-node src/scripts/testEmailNotification.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

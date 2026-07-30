@@ -4,6 +4,8 @@ import userRoutes from './userRoutes';
 import reminderRoutes from './reminderRoutes';
 import clientRoutes from './clientRoutes';
 import categoryRoutes from './categoryRoutes';
+import notificationRoutes from './notificationRoutes';
+import organizationEmailRoutes from './organizationEmailRoutes';
 
 const router = express.Router();
 
@@ -12,6 +14,8 @@ router.use('/users', userRoutes);
 router.use('/reminders', reminderRoutes);
 router.use('/clients', clientRoutes);
 router.use('/categories', categoryRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/organization-emails', organizationEmailRoutes);
 
 export default router;
 

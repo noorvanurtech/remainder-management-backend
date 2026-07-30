@@ -4,22 +4,28 @@ class NodemailerStrategy {
   private transporter;
 
   constructor() {
-    const port = Number(process.env.SMTP_PORT) || 587;
+    const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
+    const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || '').replace(/^['"]|['"]$/g, '');
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      host: process.env.SMTP_HOST || process.env.EMAIL_HOST || "smtp.gmail.com",
       port: port,
-      secure: port === 465, // true for 465, false for other ports
+      secure: port === 465,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: smtpUser,
+        pass: smtpPass,
       },
     });
   }
 
   async sendEmail(options: { to: string; subject: string; text?: string; html: string; attachments?: any[] }) {
     try {
+      const fromEmail = process.env.FROM_EMAIL || process.env.EMAIL_FROM || process.env.SMTP_USER || process.env.EMAIL_USER;
+      const fromName = process.env.FROM_NAME || 'Reminder Management';
+
       const info = await this.transporter.sendMail({
-        from: `"${process.env.FROM_NAME || 'Glassforce'}" <${process.env.FROM_EMAIL || 'noreply@glassforce.com'}>`,
+        from: `"${fromName}" <${fromEmail}>`,
         to: options.to,
         subject: options.subject,
         text: options.text,

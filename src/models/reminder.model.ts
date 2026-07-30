@@ -11,7 +11,7 @@ export interface IReminder extends Document {
   dueDate: Date;
   startDate?: Date;
   endDate?: Date;
-  schedule: 'Monthly' | '3 Months' | '6 Months' | 'Yearly' | 'Custom Date' | 'One-time';
+  schedule: 'Daily' | 'Monthly' | '3 Months' | '6 Months' | 'Yearly' | 'Custom Date' | 'One-time';
   repeat: boolean;
   notifyEmail: boolean;
   notifyDashboard: boolean;
@@ -73,7 +73,7 @@ const ReminderSchema: Schema = new Schema(
     },
     schedule: {
       type: String,
-      enum: ['Monthly', '3 Months', '6 Months', 'Yearly', 'Custom Date', 'One-time'],
+      enum: ['Daily', 'Monthly', '3 Months', '6 Months', 'Yearly', 'Custom Date', 'One-time'],
       default: 'Monthly',
     },
     repeat: {

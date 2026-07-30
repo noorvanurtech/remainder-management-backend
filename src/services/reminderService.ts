@@ -15,7 +15,9 @@ class ReminderService {
 
     const schedule = reminder.schedule || 'Monthly';
 
-    if (schedule === 'Monthly') {
+    if (schedule === 'Daily') {
+      nextDue.setDate(nextDue.getDate() + 1);
+    } else if (schedule === 'Monthly') {
       nextDue.setMonth(nextDue.getMonth() + 1);
     } else if (schedule === '3 Months') {
       nextDue.setMonth(nextDue.getMonth() + 3);
@@ -29,16 +31,10 @@ class ReminderService {
       nextStart = new Date(reminder.endDate);
       nextEnd = new Date(nextStart.getTime() + validDuration);
       nextDue = new Date(nextEnd);
+    } else if (schedule === 'One-time') {
+      nextDue = new Date(currentDue);
     } else {
       nextDue.setMonth(nextDue.getMonth() + 1);
-    }
-
-    if (reminder.startDate && !nextStart) {
-      nextStart = new Date(reminder.startDate);
-      if (schedule === 'Monthly') nextStart.setMonth(nextStart.getMonth() + 1);
-      else if (schedule === '3 Months') nextStart.setMonth(nextStart.getMonth() + 3);
-      else if (schedule === '6 Months') nextStart.setMonth(nextStart.getMonth() + 6);
-      else if (schedule === 'Yearly') nextStart.setFullYear(nextStart.getFullYear() + 1);
     }
 
     if (reminder.endDate && !nextEnd) {
@@ -114,7 +110,7 @@ class ReminderService {
    * Get all reminders for a user with filtering, searching, and status auto-update
    */
   async getAllReminders(userId: string, filters: any = {}): Promise<{ reminders: IReminder[]; total: number }> {
-    const { status, category, client, search, page = 1, limit = 50 } = filters;
+    const { status, category, client, search, page = 1, limit = 50, sort } = filters;
 
     // First auto-mark overdue reminders
     await Reminder.updateMany(
@@ -153,8 +149,11 @@ class ReminderService {
 
     const skip = (Number(page) - 1) * Number(limit);
 
+    // Default sort by createdAt descending (initial order) so updating status or due date does not change response order
+    const sortOption: any = sort ? sort : { createdAt: -1 };
+
     const [reminders, total] = await Promise.all([
-      Reminder.find(query).sort({ dueDate: 1, createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Reminder.find(query).sort(sortOption).skip(skip).limit(Number(limit)),
       Reminder.countDocuments(query),
     ]);
 
@@ -173,6 +172,39 @@ class ReminderService {
   }
 
   /**
+   * Helper to check if a reminder is eligible to advance to the next cycle
+   */
+  private validateCycleAdvanceEligibility(reminder: IReminder): void {
+    const now = new Date();
+    const due = new Date(reminder.dueDate);
+    const schedule = reminder.schedule || 'Monthly';
+
+    if (schedule === 'Daily') {
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfDueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+      if (startOfDueDay >= startOfToday) {
+        throw new Error('Cannot update daily reminder: due date is today or in the future');
+      }
+    } else if (schedule === 'Monthly' || schedule === '3 Months' || schedule === '6 Months') {
+      const currentYearMonth = now.getFullYear() * 12 + now.getMonth();
+      const dueYearMonth = due.getFullYear() * 12 + due.getMonth();
+      if (dueYearMonth >= currentYearMonth) {
+        throw new Error('Cannot update monthly reminder: due date is within the current month or in the future');
+      }
+    } else if (schedule === 'Yearly') {
+      const currentYear = now.getFullYear();
+      const dueYear = due.getFullYear();
+      if (dueYear >= currentYear) {
+        throw new Error('Cannot update yearly reminder: due date is within the current year or in the future');
+      }
+    } else {
+      if (due >= now) {
+        throw new Error('Cannot update reminder: due date has not passed yet');
+      }
+    }
+  }
+
+  /**
    * Update a reminder by ID with auto-repeat logic on completion
    */
   async updateReminder(userId: string, reminderId: string, updateData: any): Promise<IReminder> {
@@ -181,9 +213,34 @@ class ReminderService {
       throw new Error('Reminder not found or unauthorized');
     }
 
-    if (updateData.dueDate) {
+    // Protect createdAt so it remains unchanged from when the reminder was created
+    delete updateData.createdAt;
+
+    // Check if advancing to the next cycle (when dueDate is not explicitly provided, or status is Completed)
+    const isAdvancingCycle = !updateData.dueDate || updateData.status === 'Completed';
+    if (isAdvancingCycle) {
+      this.validateCycleAdvanceEligibility(existingReminder);
+    }
+
+    // If dueDate is not sent, calculate next due date based on schedule nature (Daily, Monthly, 3 Months, 6 Months, Yearly, etc.)
+    if (!updateData.dueDate) {
+      const nextDates = this.calculateNextDates(existingReminder);
+      updateData.dueDate = nextDates.dueDate;
+      if (nextDates.endDate) {
+        updateData.endDate = nextDates.endDate;
+      }
+      if (existingReminder.cycle) {
+        updateData.cycle = this.incrementCycle(existingReminder.cycle);
+      }
+    } else {
       updateData.dueDate = new Date(updateData.dueDate);
     }
+
+    // Ignore status 'Completed' if sent and reset status to 'Pending' so the reminder stays active for the next due date
+    if (updateData.status === 'Completed') {
+      updateData.status = 'Pending';
+    }
+
     if (updateData.startDate) {
       updateData.startDate = new Date(updateData.startDate);
     }
@@ -199,29 +256,6 @@ class ReminderService {
 
     if (!updatedReminder) {
       throw new Error('Reminder not found or unauthorized');
-    }
-
-    // Auto-repeat logic: When marking a repeating reminder as Completed
-    if (updateData.status === 'Completed' && updatedReminder.repeat) {
-      const nextDates = this.calculateNextDates(updatedReminder);
-      const nextCycle = this.incrementCycle(updatedReminder.cycle);
-
-      await Reminder.create({
-        user: userId,
-        title: updatedReminder.title,
-        description: updatedReminder.description,
-        client: updatedReminder.client,
-        category: updatedReminder.category,
-        cycle: nextCycle,
-        status: 'Pending',
-        dueDate: nextDates.dueDate,
-        startDate: nextDates.startDate,
-        endDate: nextDates.endDate,
-        schedule: updatedReminder.schedule,
-        repeat: true,
-        notifyEmail: updatedReminder.notifyEmail,
-        notifyDashboard: updatedReminder.notifyDashboard,
-      });
     }
 
     return updatedReminder;

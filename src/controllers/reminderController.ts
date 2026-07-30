@@ -3,9 +3,17 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import reminderService from '../services/reminderService';
 import { STATUS } from '../constants/messages';
 
+const getUserId = (req: AuthRequest): string => {
+  const userId = req.user?._id || req.user?.id;
+  if (!userId) {
+    throw new Error('User authentication required');
+  }
+  return userId.toString();
+};
+
 export const createReminder = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req.user as any).id;
+    const userId = getUserId(req);
     const reminder = await reminderService.createReminder(userId, req.body);
 
     res.status(201).json({
@@ -23,7 +31,7 @@ export const createReminder = async (req: AuthRequest, res: Response, next: Next
 
 export const getAllReminders = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req.user as any).id;
+    const userId = getUserId(req);
     const { reminders, total } = await reminderService.getAllReminders(userId, req.query);
 
     res.status(200).json({
@@ -41,7 +49,7 @@ export const getAllReminders = async (req: AuthRequest, res: Response, next: Nex
 
 export const getReminderById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req.user as any).id;
+    const userId = getUserId(req);
     const reminderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const reminder = await reminderService.getReminderById(userId, reminderId);
 
@@ -59,7 +67,7 @@ export const getReminderById = async (req: AuthRequest, res: Response, next: Nex
 
 export const updateReminder = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req.user as any).id;
+    const userId = getUserId(req);
     const reminderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const reminder = await reminderService.updateReminder(userId, reminderId, req.body);
 
@@ -78,7 +86,7 @@ export const updateReminder = async (req: AuthRequest, res: Response, next: Next
 
 export const deleteReminder = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = (req.user as any).id;
+    const userId = getUserId(req);
     const reminderId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     await reminderService.deleteReminder(userId, reminderId);
 

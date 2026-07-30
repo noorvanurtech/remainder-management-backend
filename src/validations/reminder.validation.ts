@@ -16,7 +16,7 @@ export const createReminderSchema = z.object({
     endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: 'Invalid end date format.',
     }).optional(),
-    schedule: z.enum(['Monthly', '3 Months', '6 Months', 'Yearly', 'Custom Date', 'One-time']).optional(),
+    schedule: z.enum(['Daily', 'Monthly', '3 Months', '6 Months', 'Yearly', 'Custom Date', 'One-time']).optional(),
     repeat: z.boolean().optional(),
     notifyEmail: z.boolean().optional(),
     notifyDashboard: z.boolean().optional(),
@@ -40,7 +40,7 @@ export const updateReminderSchema = z.object({
     endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: 'Invalid end date format',
     }).optional(),
-    schedule: z.enum(['Monthly', '3 Months', '6 Months', 'Yearly', 'Custom Date', 'One-time']).optional(),
+    schedule: z.enum(['Daily', 'Monthly', '3 Months', '6 Months', 'Yearly', 'Custom Date', 'One-time']).optional(),
     repeat: z.boolean().optional(),
     notifyEmail: z.boolean().optional(),
     notifyDashboard: z.boolean().optional(),
