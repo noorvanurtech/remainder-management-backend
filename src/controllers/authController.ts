@@ -2,6 +2,25 @@ import { Request, Response, NextFunction } from 'express';
 import authService from '../services/authService';
 import { MESSAGES, STATUS } from '../constants/messages';
 
+const handleControllerError = (err: any, res: Response, next: NextFunction) => {
+    const isSystemError =
+        err.name === 'MongoServerSelectionError' ||
+        err.name === 'MongoNetworkError' ||
+        err.name === 'MongooseError' ||
+        err.message?.includes('buffering timed out') ||
+        err.message?.includes('ECONNREFUSED') ||
+        err.message?.includes('ETIMEDOUT');
+
+    if (isSystemError) {
+        return next(err);
+    }
+
+    res.status(err.statusCode || 400).json({
+        status: STATUS.FAIL,
+        message: err.message || 'An error occurred',
+    });
+};
+
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { fullName, name, email, password, phone } = req.body;
@@ -15,7 +34,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
             data: result.user
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -32,7 +51,7 @@ export const adminRegister = async (req: Request, res: Response, next: NextFunct
             data: result.user
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -48,9 +67,10 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
             data: result.user
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
+
 export const googleLogin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { idToken, role } = req.body;
@@ -63,7 +83,7 @@ export const googleLogin = async (req: Request, res: Response, next: NextFunctio
             data: result.user
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -79,7 +99,7 @@ export const adminLogin = async (req: Request, res: Response, next: NextFunction
             data: result.user
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -93,10 +113,9 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
             token: result.token,
             message: MESSAGES.AUTH.OTP_VERIFIED,
             data: result.user
-
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -112,9 +131,8 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
             token: result.token,
             message: MESSAGES.AUTH.PASSWORD_CHANGED
         });
-
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -137,9 +155,8 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
             status: STATUS.SUCCESS,
             message: MESSAGES.AUTH.LOGOUT_SUCCESS
         });
-
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -153,7 +170,7 @@ export const forgotPasswordOtp = async (req: Request, res: Response, next: NextF
             message: result.message
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
 
@@ -167,7 +184,6 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
             message: result.message
         });
     } catch (err) {
-        res.status(500).json({ status: STATUS.FAIL, message: (err as Error).message });
+        handleControllerError(err, res, next);
     }
 };
-

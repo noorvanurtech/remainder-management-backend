@@ -2,9 +2,22 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 dotenv.config();
 
+let isConnected = false;
+
 const connectDB = async () => {
+  if (isConnected || mongoose.connection.readyState >= 1) {
+    isConnected = true;
+    return;
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || '');
+    // Disable Mongoose buffering globally so queries fail fast if DB is not connected
+    mongoose.set('bufferCommands', false);
+
+    const conn = await mongoose.connect(process.env.MONGO_URI || '', {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of hanging indefinitely
+    });
+    isConnected = true;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
     try {
@@ -21,8 +34,11 @@ const connectDB = async () => {
     console.log('User indexes synced');
 
   } catch (error: any) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    console.error(`MongoDB connection error: ${error.message}`);
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 

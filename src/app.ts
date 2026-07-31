@@ -84,9 +84,20 @@ app.get('/health', (req, res) => {
 });
 
 /* ================================
-   8. Routes
+   8. Database Connection & Routes
 ================================ */
+import connectDB from './config/db';
 import routes from './routes';
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.use('/api/v1', routes);
 
 /* ================================
