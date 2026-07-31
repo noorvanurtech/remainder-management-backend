@@ -120,6 +120,66 @@ const seed = async () => {
       });
     }
 
+    // Seed Past Daily Reminders (25 July, 26 July, 27 July, 28 July, 29 July, 30 July)
+    console.log("Seeding Past Daily Reminders (25 July - 30 July)...");
+    const pastDailyReminders: Array<{
+      day: number;
+      hour: number;
+      minute: number;
+      title: string;
+      desc: string;
+      status: 'Pending' | 'Overdue' | 'Completed' | 'Cancelled';
+    }> = [
+        // 25 July
+        // { day: 25, hour: 9, minute: 0, title: "Daily Backup Verification (25 July)", desc: "Daily system backup verification completed for 25 July.", status: "Completed" },
+        { day: 25, hour: 17, minute: 0, title: "Daily Database Health Check (25 July)", desc: "Database health check completed for 25 July.", status: "Overdue" },
+
+        // 26 July
+        // { day: 26, hour: 10, minute: 0, title: "Daily Security Vulnerability Scan (26 July)", desc: "Daily security scan completed for 26 July.", status: "Completed" },
+        { day: 26, hour: 15, minute: 0, title: "Daily SSL Certificate Monitor (26 July)", desc: "SSL cert status checked on 26 July.", status: "Overdue" },
+
+        // 27 July
+        // { day: 27, hour: 9, minute: 30, title: "Daily API Rate-Limit Audit (27 July)", desc: "API rate limit review for 27 July.", status: "Completed" },
+        // { day: 27, hour: 14, minute: 0, title: "Daily Server Log Cleanup (27 July)", desc: "Server log rotation for 27 July.", status: "Completed" },
+        { day: 27, hour: 20, minute: 0, title: "Daily Transaction Reconciliation (27 July)", desc: "Daily transaction reconciliation for 27 July.", status: "Overdue" },
+
+        // 28 July
+        // { day: 28, hour: 9, minute: 0, title: "Daily Cloud Infra Cost Sync (28 July)", desc: "Cloud infrastructure cost sync for 28 July.", status: "Completed" },
+        // { day: 28, hour: 11, minute: 0, title: "Daily Payment Gateway Status Check (28 July)", desc: "Payment gateway check for 28 July.", status: "Completed" },
+        { day: 28, hour: 16, minute: 0, title: "Daily Customer Ticket Triaging (28 July)", desc: "Customer tickets triaged for 28 July.", status: "Overdue" },
+
+        // 29 July
+        // { day: 29, hour: 8, minute: 0, title: "Daily Cache Flush & Warmup (29 July)", desc: "Cache warmup completed for 29 July.", status: "Completed" },
+        // { day: 29, hour: 13, minute: 30, title: "Daily Network Latency Audit (29 July)", desc: "Network latency check for 29 July.", status: "Completed" },
+        { day: 29, hour: 19, minute: 0, title: "Daily Microservice Status Sync (29 July)", desc: "Microservices status sync for 29 July.", status: "Overdue" },
+
+        // 30 July
+        // { day: 30, hour: 9, minute: 0, title: "Daily Security Firewall Rules Audit (30 July)", desc: "Firewall rules audit completed for 30 July.", status: "Completed" },
+        // { day: 30, hour: 11, minute: 30, title: "Daily E-mail Queue Monitor (30 July)", desc: "Email queue check for 30 July.", status: "Completed" },
+        { day: 30, hour: 18, minute: 0, title: "Daily End-of-Day Backup Verification (30 July)", desc: "EOD backup verification for 30 July.", status: "Overdue" },
+      ];
+
+    for (let i = 0; i < pastDailyReminders.length; i++) {
+      const item = pastDailyReminders[i];
+      const reminderDueDate = new Date(now.getFullYear(), now.getMonth(), item.day, item.hour, item.minute, 0);
+
+      await Reminder.create({
+        user: userId,
+        title: item.title,
+        description: item.desc,
+        client: clientNames[i % clientNames.length],
+        category: categoryNames[i % categoryNames.length],
+        cycle: "cycle 1",
+        status: item.status,
+        dueDate: reminderDueDate,
+        startDate: reminderDueDate,
+        schedule: "Daily",
+        repeat: true,
+        notifyEmail: true,
+        notifyDashboard: true,
+      });
+    }
+
     // Seed 3 Monthly Reminders Completed on 29 July 2026
     console.log("Seeding 3 monthly reminders completed on 29 July...");
     const completedJulyTitles = [
@@ -208,6 +268,7 @@ const seed = async () => {
     console.log("Seeding finished successfully!");
     console.log(`User Email: ${email}`);
     console.log(`User Password: ${password}`);
+    console.log("Seeded Past Daily Reminders (25, 26, 27, 28, 29, 30 July): 16 reminders");
     console.log("Seeded Daily Reminders Due Today:");
     console.log("- 1:50 AM Today");
     console.log("- 6:00 AM Today");
