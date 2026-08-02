@@ -6,6 +6,7 @@ import clientRoutes from './clientRoutes';
 import categoryRoutes from './categoryRoutes';
 import notificationRoutes from './notificationRoutes';
 import organizationEmailRoutes from './organizationEmailRoutes';
+import cronRoutes from './cronRoutes';
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ router.use('/clients', clientRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/organization-emails', organizationEmailRoutes);
+router.use('/cron', cronRoutes);
 
 export default router;
 

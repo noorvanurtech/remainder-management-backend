@@ -5,6 +5,11 @@ import reminderNotificationService from '../notification/services/reminderNotifi
 
 class CronJobManager {
   public static initialize() {
+    if (process.env.VERCEL) {
+      logger.info('Serverless environment detected (Vercel). Skipping node-cron initialization (handled via Vercel Cron endpoints).');
+      return;
+    }
+
     logger.info('Initializing Cron Jobs...');
 
     // Database Backup: Temporary testing schedule (11:40 AM IST)
