@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { exec } from 'child_process';
 import { createWriteStream, existsSync, rmSync } from 'fs';
 import path from 'path';
-import { ZipArchive } from 'archiver';
 import { google } from 'googleapis';
 import resendStrategy from '../notification/strategies/resend.strategy';
 
@@ -45,23 +44,29 @@ function dumpDatabase(): Promise<void> {
  * Step 2: Compress to .zip
  */
 function zipDirectory(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    console.log('Zipping database dump...');
-    const output = createWriteStream(ZIP_PATH);
-    const archive = new ZipArchive({ zlib: { level: 9 } });
+  return new Promise(async (resolve, reject) => {
+    try {
+      console.log('Zipping database dump...');
+      const archiverModule = await import('archiver');
+      const archiver = archiverModule.default || archiverModule;
+      const output = createWriteStream(ZIP_PATH);
+      const archive = (archiver as any)('zip', { zlib: { level: 9 } });
 
-    output.on('close', () => {
-      console.log(`Zip file created: ${archive.pointer()} total bytes`);
-      resolve();
-    });
+      output.on('close', () => {
+        console.log(`Zip file created: ${archive.pointer()} total bytes`);
+        resolve();
+      });
 
-    archive.on('error', (err) => {
+      archive.on('error', (err: any) => {
+        reject(err);
+      });
+
+      archive.pipe(output);
+      archive.directory(DUMP_DIR, false);
+      archive.finalize();
+    } catch (err) {
       reject(err);
-    });
-
-    archive.pipe(output);
-    archive.directory(DUMP_DIR, false);
-    archive.finalize();
+    }
   });
 }
 

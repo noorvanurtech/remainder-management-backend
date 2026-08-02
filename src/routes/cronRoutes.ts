@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import reminderNotificationService from '../notification/services/reminderNotification.service';
-import { runBackup } from '../scripts/backup';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
@@ -59,6 +58,7 @@ router.get('/backup', verifyCronSecret, async (req: Request, res: Response) => {
   const startTime = Date.now();
 
   try {
+    const { runBackup } = await import('../scripts/backup');
     await runBackup();
     const duration = Date.now() - startTime;
     logger.info(`[Cron API] Completed: Nightly Database Backup (${duration}ms)`);
