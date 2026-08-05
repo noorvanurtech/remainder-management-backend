@@ -23,6 +23,6 @@ router.get('/logout', protect, logout);
 router.patch('/change-password', protect, changePassword);
 
 router.post('/forgot-password-otp', forgotPasswordOtp);
-router.post('/forgot-password', protect, resetPassword);
+router.post('/forgot-password', resetPassword);
 
 export default router;

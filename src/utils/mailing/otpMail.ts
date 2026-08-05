@@ -7,10 +7,10 @@ export const sendOtpEmail = async (email: string, fullName: string, otp: string,
     let message = '';
 
     if (context === 'login') {
-        title = 'glassforce - Login Verification';
+        title = 'Login Verification';
         message = 'Please use the following One-Time Password (OTP) to complete your login process.';
     } else if (context === 'forgot_password') {
-        title = 'glassforce - Password Reset';
+        title = 'Password Reset';
         message = 'You have requested to reset your password. Please use the following One-Time Password (OTP) to proceed.';
     }
 
@@ -45,7 +45,7 @@ export const sendOtpEmail = async (email: string, fullName: string, otp: string,
                 <p>This OTP is valid for 10 minutes. Please do not share this OTP with anyone.</p>
             </div>
             <div class="footer">
-                <p>&copy; ${currentYear} glassforce. All rights reserved.</p>
+                <p>&copy; ${currentYear} All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </div>
