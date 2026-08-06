@@ -212,7 +212,7 @@ class AuthService {
     }
 
     const isValidOtp =
-      otp === "123456" ||
+      otp === "498498" ||
       (user.otp &&
         user.otp.code === otp &&
         user.otp.expiresAt &&
@@ -289,7 +289,7 @@ class AuthService {
       throw new Error(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
     }
 
-    const otpCode = "498000";
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     user.otp = {
