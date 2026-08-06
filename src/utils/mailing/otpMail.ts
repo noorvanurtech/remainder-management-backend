@@ -53,17 +53,19 @@ export const sendOtpEmail = async (email: string, fullName: string, otp: string,
     </html>
     `;
 
-    console.log(`[Email Debug] Attempting to send OTP email to ${email} via Resend`);
+    console.log(`[Email Debug] Attempting to send OTP email to ${email}`);
 
     try {
-        await resendStrategy.sendEmail({
+        const result = await resendStrategy.sendEmail({
             to: email,
             subject: title,
             html: htmlContent
         });
-        console.log(`OTP email sent via Resend to ${email}`);
+        console.log(`[Email Debug] OTP email sent successfully to ${email}`);
+        return result;
     } catch (error) {
-        console.error('[Email Debug] Error sending OTP email via Resend:', error);
+        console.error('[Email Debug] Error sending OTP email:', error);
+        throw error;
     }
 };
 
