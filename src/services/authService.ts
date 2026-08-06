@@ -289,7 +289,7 @@ class AuthService {
       throw new Error(MESSAGES.AUTH.ACCOUNT_DEACTIVATED);
     }
 
-    const otpCode = "49800";
+    const otpCode = "498000";
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     user.otp = {
